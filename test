@@ -1,0 +1,86 @@
+local ScriptBlox = loadstring(game:HttpGet("https://nicuse.xyz/scripts/scriptblox_api"))()
+
+local ScreenGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local SearchBox = Instance.new("TextBox")
+local SearchButton = Instance.new("TextButton")
+local ScriptList = Instance.new("ScrollingFrame")
+local TemplateButton = Instance.new("TextButton")
+
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+Frame.Parent = ScreenGui
+Frame.Size = UDim2.new(0, 400, 0, 300)
+Frame.Position = UDim2.new(0.5, -200, 0.5, -150)
+Frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+Frame.BorderSizePixel = 0
+
+SearchBox.Parent = Frame
+SearchBox.Size = UDim2.new(0, 300, 0, 30)
+SearchBox.Position = UDim2.new(0, 10, 0, 10)
+SearchBox.PlaceholderText = "Search for scripts..."
+SearchBox.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+SearchBox.TextColor3 = Color3.new(1, 1, 1)
+
+SearchButton.Parent = Frame
+SearchButton.Size = UDim2.new(0, 80, 0, 30)
+SearchButton.Position = UDim2.new(0, 320, 0, 10)
+SearchButton.Text = "Search"
+SearchButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+
+ScriptList.Parent = Frame
+ScriptList.Size = UDim2.new(0, 380, 0, 230)
+ScriptList.Position = UDim2.new(0, 10, 0, 50)
+ScriptList.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ScriptList.CanvasSize = UDim2.new(0, 0, 0, 0)
+ScriptList.ScrollBarThickness = 8
+
+TemplateButton.Size = UDim2.new(1, -10, 0, 30)
+TemplateButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+TemplateButton.TextColor3 = Color3.new(1, 1, 1)
+TemplateButton.Visible = false
+
+local function CreateScriptButton(script)
+    local Slug = ScriptBlox:FetchSlug(script)
+    local Title = ScriptBlox:FetchTitle(script)
+    local Loadstring = ScriptBlox:FetchLoadstring(script)
+
+    local Button = TemplateButton:Clone()
+    Button.Visible = true
+    Button.Text = Title
+    Button.Parent = ScriptList
+
+    Button.MouseButton1Click:Connect(function()
+        setclipboard(Loadstring)
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "ScriptBlox GUI",
+            Text = "Script copied to clipboard!",
+            Duration = 5
+        })
+    end)
+
+    return Button
+end
+
+local function PopulateScriptList(query)
+    for _, child in pairs(ScriptList:GetChildren()) do
+        if child:IsA("TextButton") and child ~= TemplateButton then
+            child:Destroy()
+        end
+    end
+
+    local SearchResult = ScriptBlox:Search(query, ScriptBlox.ScriptType.Free)
+    local TotalScripts = #SearchResult
+    ScriptList.CanvasSize = UDim2.new(0, 0, 0, TotalScripts * 35)
+
+    for i, script in ipairs(SearchResult) do
+        local Button = CreateScriptButton(script)
+        Button.Position = UDim2.new(0, 5, 0, (i - 1) * 35)
+    end
+end
+
+SearchButton.MouseButton1Click:Connect(function()
+    local query = SearchBox.Text
+    if query and query ~= "" then
+        PopulateScriptList(query)
+    end
+end)
